@@ -28,6 +28,10 @@ def planewise_correlation(picture_array,no_of_images,main_plane="False"):
         correlation2 = np.sum(picture_array[midpos]*picture_array[ix])/(coef1*coef2)
         corrmat[ix]=correlation2
     return corrmat
+def wiener_filter(ft_spsf,ft_im,lam=0.0005):#this function takes ft of psf and image and makes wiener deconvolution
+    fil = ft_spsf.conj()/(np.abs(ft_spsf)**2+lam)
+    deconv=fil*ft_im
+    return deconv#the returned object ft of the real data , it should be inverse fourier transformed
 
 def order_pictures(adress,im_dir,shape):
     ordered=[]
@@ -452,6 +456,13 @@ for ix in enumerate(deconvolved_stack_im):
     plt.imshow(ix[1],cmap="gray")
     plt.title("position at transverse axis "+str(ix[0]))
     plt.gcf().savefig(plot_dir+"/"+"Fig2_reconstruction_plane_num"+str(ix[0])+"_.png",dpi=400)
+    plt.show()
+for ix in enumerate(saturated_stack_spsf):
+    ft_psf_wfil =np.fft.fftshift(np.fft.fft2(np.pad(ix[1]/np.sum(ix[1]),(100,100),"constant",constant_values=(0,0))))
+    ft_im_wfil = np.fft.fftshift(np.fft.fft2(speckle_image/np.sum(speckle_image)))
+    res=wiener_filter(ft_psf_wfil,ft_im_wfil,lam=0.002)
+    plt.imshow(np.abs(np.fft.ifftshift(np.fft.ifft2(res))))
+    #plt.gcf().savefig(plot_dir+"/"+"saturated_deconvolution_with_wiener_filter_"+str(ix[0])+".png",dpi=400)
     plt.show()
 diff_lymos_saturated=[]
 diff_lymos_nonsaturated=[]
